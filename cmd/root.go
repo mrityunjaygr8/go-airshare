@@ -41,7 +41,9 @@ var rootCmd = &cobra.Command{
 	//	Run: func(cmd *cobra.Command, args []string) { },
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("so now it begins")
+		fmt.Println(port)
+
+		utils.CreateService(args[0], port)
 	},
 }
 
