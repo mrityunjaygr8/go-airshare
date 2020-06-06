@@ -36,14 +36,13 @@ var rootCmd = &cobra.Command{
 	Use:   "go-airshare [flags] code [files] ",
 	Short: "Golang port of airshare",
 	Long: `A golang port of airshare, a python library for airdrop-like functionality.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	//	Run: func(cmd *cobra.Command, args []string) { },
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println(port)
-
-		utils.CreateService(args[0], port)
+		if text == "" {
+			fmt.Println("You did not provide any text to send to the server")
+			os.Exit(1)
+		}
+		utils.CreateService(args[0], text, port)
 	},
 }
 
