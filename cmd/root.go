@@ -22,13 +22,18 @@ import (
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
+	// "github.com/mrityunjaygr8/go-airshare/functions"
+	"github.com/mrityunjaygr8/go-airshare/utils"
 )
 
 var cfgFile string
+var port int
+var text string
+
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "go-airshare",
+	Use:   "go-airshare [flags] code [files] ",
 	Short: "Golang port of airshare",
 	Long: `A golang port of airshare, a python library for airdrop-like functionality.`,
 	// Uncomment the following line if your bare application
@@ -52,15 +57,10 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
+	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.go-airshare.yaml)")
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.go-airshare.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.Flags().IntVarP(&port ,"port", "p", utils.Default_Port, "the port where the webserver will be run")
+	rootCmd.Flags().StringVarP(&text, "text", "t", "", "the text to be sent via the webserver")
 }
 
 // initConfig reads in config file and ENV variables if set.
