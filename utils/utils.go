@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 	"log"
+	"net"
 	"net/http"
 	"fmt"
 	"os"
@@ -14,19 +15,30 @@ import (
 
 const (
 	Domain string = "local."
-	Service string = "_testimg._tcp"
+	Service string = "_goshare._http._tcp"
 	Default_Port = 8000
 )
 
 func servicePresent(service_code string, results <- chan *zeroconf.ServiceEntry) bool {
 	var service = service_code + "." + Service + "." + Domain
-	fmt.Println(service)
 	for entry := range results {
 		if entry.ServiceInstanceName() == service {
 			return true
 		}
 	}
 	return false
+}
+
+func getIPAddress() string {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr).IP.String()
+	return localAddr
 }
 
 func CheckServicePresent(service_code string) bool {
@@ -49,32 +61,36 @@ func CheckServicePresent(service_code string) bool {
 	return a
 }
 
-func startService(port int) {
+func startService(text string, port int) {
 	http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(rw, "Hello World")
+		fmt.Fprintf(rw, text)
 	})
 
-	log.Println("starting http service ...")
 	if err := http.ListenAndServe(":"+strconv.Itoa(port), nil); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func CreateService(service_code string, port int) {
-	log.Println(port)
+func CreateService(service_code string, text string, port int) {
 	if !CheckServicePresent(service_code) {
-		go startService(port)
+		go startService(text, port)
 
 		meta := []string{
 			"version=0.1.0",
 			"hello=world",
 		}
 
-		service, err := zeroconf.Register(
+		ips := []string{
+			getIPAddress(),
+		}
+
+		service, err := zeroconf.RegisterProxy(
 			service_code,
 			Service,
 			Domain,
 			port,
+			service_code,
+			ips,
 			meta,
 			nil,
 		)
@@ -82,6 +98,11 @@ func CreateService(service_code string, port int) {
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		ip_addr := "http://"+ips[0]+":"+strconv.Itoa(port)
+		service_addr := "http://"+service_code+".local"+":"+strconv.Itoa(port)
+
+		fmt.Printf("Access the service at: %s or at: %s, press \"Ctrl+C\" to stop sharing\n", ip_addr, service_addr)
 
 		defer service.Shutdown()
 
