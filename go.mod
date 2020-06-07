@@ -3,11 +3,13 @@ module github.com/mrityunjaygr8/go-airshare
 go 1.14
 
 require (
+	github.com/Baozisoftware/qrcode-terminal-go v0.0.0-20170407111555-c0650d8dff0f
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/grandcat/zeroconf v1.0.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.3.1 // indirect
 	github.com/pelletier/go-toml v1.8.0 // indirect
+	github.com/skip2/go-qrcode v0.0.0-20200526175731-7ac0b40b2038 // indirect
 	github.com/spf13/afero v1.2.2 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
 	github.com/spf13/cobra v1.0.0
