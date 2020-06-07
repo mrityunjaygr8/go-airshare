@@ -29,6 +29,7 @@ import (
 var cfgFile string
 var port int
 var text string
+var clipSend bool
 
 
 // rootCmd represents the base command when called without any subcommands
@@ -38,10 +39,19 @@ var rootCmd = &cobra.Command{
 	Long: `A golang port of airshare, a python library for airdrop-like functionality.`,
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		if clipSend {
+			textContent, err := utils.CopyClipBoard()
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			text = string(textContent)
+		}
 		if text == "" {
 			fmt.Println("You did not provide any text to send to the server")
 			os.Exit(1)
 		}
+		fmt.Println(text)
 		utils.CreateService(args[0], text, port)
 	},
 }
@@ -62,6 +72,7 @@ func init() {
 
 	rootCmd.Flags().IntVarP(&port ,"port", "p", utils.Default_Port, "the port where the webserver will be run")
 	rootCmd.Flags().StringVarP(&text, "text", "t", "", "the text to be sent via the webserver")
+	rootCmd.Flags().BoolVarP(&clipSend, "clip-send", "c", false, "send (serve) the clipboard content")
 }
 
 // initConfig reads in config file and ENV variables if set.
