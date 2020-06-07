@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"fmt"
 	"os"
+	"strings"
 	"strconv"
 
 	"github.com/grandcat/zeroconf"
@@ -78,7 +79,7 @@ func startTextServer(text string, port int) {
 		rw.Header().Set("Content-Type", "text/html")
 		Openfile.Seek(0, 0)
 		io.Copy(rw, Openfile)
-		return
+		fmt.Println("Resource accessed by:", strings.Split(r.RemoteAddr, ":")[0])
 	})
 
 	http.HandleFunc("/airshare", func(rw http.ResponseWriter, r *http.Request) {
