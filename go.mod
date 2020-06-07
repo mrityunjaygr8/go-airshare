@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/Baozisoftware/qrcode-terminal-go v0.0.0-20170407111555-c0650d8dff0f
+	github.com/atotto/clipboard v0.1.2
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/grandcat/zeroconf v1.0.0
 	github.com/mitchellh/go-homedir v1.1.0
