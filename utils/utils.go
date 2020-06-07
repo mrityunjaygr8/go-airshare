@@ -14,6 +14,7 @@ import (
 
 	"github.com/grandcat/zeroconf"
 	"github.com/Baozisoftware/qrcode-terminal-go"
+	"github.com/atotto/clipboard"
 )
 
 const (
@@ -21,6 +22,14 @@ const (
 	Service string = "_goshare._http._tcp"
 	Default_Port = 8000
 )
+
+func CopyClipBoard() (string, error) {
+	text, err := clipboard.ReadAll()
+	if err != nil {
+		return "", err
+	}
+	return string(text), nil
+}
 
 func servicePresent(service_code string, results <- chan *zeroconf.ServiceEntry) bool {
 	var service = service_code + "." + Service + "." + Domain
@@ -80,7 +89,6 @@ func startTextServer(text string, port int) {
 		rw.Header().Set("Content-Type", "text/html")
 		Openfile.Seek(0, 0)
 		io.Copy(rw, Openfile)
-		fmt.Println("Resource accessed by:", strings.Split(r.RemoteAddr, ":")[0])
 	})
 
 	http.HandleFunc("/airshare", func(rw http.ResponseWriter, r *http.Request) {
@@ -89,6 +97,7 @@ func startTextServer(text string, port int) {
 
 	http.HandleFunc("/text", func(rw http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(rw, text)
+		fmt.Println("Resource accessed by:", strings.Split(r.RemoteAddr, ":")[0])
 	})
 
 	if err := http.ListenAndServe(":"+strconv.Itoa(port), nil); err != nil {
