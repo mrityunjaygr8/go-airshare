@@ -47,12 +47,12 @@ var rootCmd = &cobra.Command{
 			}
 			text = string(textContent)
 		}
-		if text == "" {
-			fmt.Println("You did not provide any text to send to the server")
-			os.Exit(1)
+		if text != "" {
+			utils.CreateTextService(args[0], text, port)
 		}
-		fmt.Println(text)
-		utils.CreateService(args[0], text, port)
+		if len(args) == 2 {
+			fmt.Println(args)
+		}
 	},
 }
 
