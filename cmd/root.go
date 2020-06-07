@@ -51,7 +51,7 @@ var rootCmd = &cobra.Command{
 			utils.CreateTextService(args[0], text, port)
 		}
 		if len(args) == 2 {
-			fmt.Println(args)
+			utils.CreateFileService(args[0], args[1:], port)
 		}
 	},
 }

@@ -51,6 +51,11 @@ func getAbsolutePath(file string) string {
 	return absPath 
 }
 
+func getFileName(files []string) (string, string) {
+	file := getAbsolutePath(files[0])
+	return file, "false"
+}
+
 
 func getIPAddress() string {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
@@ -126,9 +131,9 @@ func startTextServer(text string, port int) {
 	}
 }
 
-func startFileServer(text string, port int) {
+func startFileServer(file string, port int, compress string) {
 	http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
-		Openfile, err := os.Open("static/text.html")
+		Openfile, err := os.Open("static/download.html")
 		defer Openfile.Close()
 
 		if err != nil {
@@ -145,12 +150,37 @@ func startFileServer(text string, port int) {
 	})
 
 	http.HandleFunc("/airshare", func(rw http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(rw, "Text Sender")
+		fmt.Fprintf(rw, "File Sender")
 	})
 
-	http.HandleFunc("/text", func(rw http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(rw, text)
-		fmt.Println("Resource accessed by:", strings.Split(r.RemoteAddr, ":")[0])
+	http.HandleFunc("/download", func(rw http.ResponseWriter, r *http.Request) {
+		Openfile, err := os.Open(file)
+		defer Openfile.Close()
+		if err != nil {
+			http.Error(rw, "File not found", 404)
+			return
+		}
+
+		FileHeader := make([]byte, 512)
+		Openfile.Read(FileHeader)
+		FileContentType := http.DetectContentType(FileHeader)
+
+		FileStat, _ := Openfile.Stat()
+		FileSize := strconv.FormatInt(FileStat.Size(), 10)
+
+		rw.Header().Set("Content-Type", FileContentType)
+		rw.Header().Set("Content-Disposition", "attachment; filename=\""+filepath.Base(file)+"\"; size="+FileSize)
+		rw.Header().Set("Content-Length", FileSize)
+		rw.Header().Set("airshare-compress", compress)
+		if r.Method == "HEAD" {
+			fmt.Println("Resource accessed by:", strings.Split(r.RemoteAddr, ":")[0])
+		}
+		if r.Method == "GET" {
+			fmt.Println("Resource examined by:", strings.Split(r.RemoteAddr, ":")[0])
+		}
+		Openfile.Seek(0, 0)
+		io.Copy(rw, Openfile)
+		return
 	})
 
 	if err := http.ListenAndServe(":"+strconv.Itoa(port), nil); err != nil {
@@ -208,6 +238,17 @@ func startService(service_code string, port int) {
 func CreateTextService(service_code string, text string, port int) {
 	if !CheckServicePresent(service_code) {
 		go startTextServer(text, port)
+		startService(service_code, port)
+	} else {
+		log.Fatal("A mDNS service with the same name is already running")
+		os.Exit(-1)
+	}
+}
+
+func CreateFileService(service_code string, files []string, port int) {
+	if !CheckServicePresent(service_code) {
+		file, compress := getFileName(files)
+		go startFileServer(file, port, compress)
 		startService(service_code, port)
 	} else {
 		log.Fatal("A mDNS service with the same name is already running")
