@@ -50,7 +50,7 @@ var rootCmd = &cobra.Command{
 		if text != "" {
 			utils.CreateTextService(args[0], text, port)
 		}
-		if len(args) == 2 {
+		if len(args) > 1 {
 			utils.CreateFileService(args[0], args[1:], port)
 		}
 	},

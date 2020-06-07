@@ -3,6 +3,7 @@ package utils
 import (
 	"context"
 	"io"
+	"io/ioutil"
 	"time"
 	"log"
 	"net"
@@ -15,6 +16,7 @@ import (
 	"strings"
 	"strconv"
 	"path/filepath"
+	"archive/zip"
 
 	"github.com/grandcat/zeroconf"
 	"github.com/Baozisoftware/qrcode-terminal-go"
@@ -51,9 +53,48 @@ func getAbsolutePath(file string) string {
 	return absPath 
 }
 
+func appendFiles(filename string, zipw *zip.Writer) error {
+	file, err := os.Open(filename)
+	if err != nil {
+		return fmt.Errorf("Failed to open %s: %s", filename, err)
+	}
+	defer file.Close()
+ 
+	wr, err := zipw.Create(filename)
+	if err != nil {
+		msg := "Failed to create entry for %s in zip file: %s"
+		return fmt.Errorf(msg, filename, err)
+	}
+ 
+	if _, err := io.Copy(wr, file); err != nil {
+		return fmt.Errorf("Failed to write %s to zip: %s", filename, err)
+	}
+ 
+	return nil
+}
+
+
 func getFileName(files []string) (string, string) {
-	file := getAbsolutePath(files[0])
-	return file, "false"
+	if len(files) == 1 {
+		file := getAbsolutePath(files[0])
+		return file, "false"
+	} else {
+		tmpFile, err := ioutil.TempFile("", "airshare.zip")
+		if err != nil {
+			log.Fatalf("Failed to open tmp file for writing: %s", err)
+		}
+
+		zipw := zip.NewWriter(tmpFile)
+		defer zipw.Close()
+
+		for _, filename := range files {
+			if err := appendFiles(filename, zipw); err != nil {
+				log.Fatalf("Failed to add file %s to zip: %s", filename, err)
+			}
+		}
+		file := getAbsolutePath(tmpFile.Name())
+		return file, "true"
+	}
 }
 
 
@@ -169,8 +210,12 @@ func startFileServer(file string, port int, compress string) {
 		FileSize := strconv.FormatInt(FileStat.Size(), 10)
 
 		rw.Header().Set("Content-Type", FileContentType)
-		rw.Header().Set("Content-Disposition", "attachment; filename=\""+filepath.Base(file)+"\"; size="+FileSize)
 		rw.Header().Set("Content-Length", FileSize)
+		if compress == "true" {
+			rw.Header().Set("Content-Disposition", "attachment; filename=\"airshare.zip\"; size="+FileSize)	
+		} else {
+			rw.Header().Set("Content-Disposition", "attachment; filename=\""+filepath.Base(file)+"\"; size="+FileSize)
+		}
 		rw.Header().Set("airshare-compress", compress)
 		if r.Method == "HEAD" {
 			fmt.Println("Resource accessed by:", strings.Split(r.RemoteAddr, ":")[0])
