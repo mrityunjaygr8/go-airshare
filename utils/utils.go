@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"io"
 	"time"
 	"log"
 	"net"
@@ -61,8 +62,30 @@ func CheckServicePresent(service_code string) bool {
 	return a
 }
 
-func startService(text string, port int) {
+func startTextServer(text string, port int) {
 	http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
+		Openfile, err := os.Open("static/text.html")
+		defer Openfile.Close()
+
+		if err != nil {
+			http.Error(rw, "File not found", 404)
+			return
+		}
+
+		FileHeader := make([]byte, 512)
+		Openfile.Read(FileHeader)
+
+		rw.Header().Set("Content-Type", "text/html")
+		Openfile.Seek(0, 0)
+		io.Copy(rw, Openfile)
+		return
+	})
+
+	http.HandleFunc("/airshare", func(rw http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(rw, "Text Sender")
+	})
+
+	http.HandleFunc("/text", func(rw http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(rw, text)
 	})
 
@@ -73,7 +96,7 @@ func startService(text string, port int) {
 
 func CreateService(service_code string, text string, port int) {
 	if !CheckServicePresent(service_code) {
-		go startService(text, port)
+		go startTextServer(text, port)
 
 		meta := []string{
 			"version=0.1.0",
