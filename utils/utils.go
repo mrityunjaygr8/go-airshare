@@ -13,6 +13,7 @@ import (
 	"strconv"
 
 	"github.com/grandcat/zeroconf"
+	"github.com/Baozisoftware/qrcode-terminal-go"
 )
 
 const (
@@ -95,6 +96,11 @@ func startTextServer(text string, port int) {
 	}
 }
 
+func generateQRForCode(host string) {
+	obj := qrcodeTerminal.New()
+	obj.Get(host).Print()
+}
+
 func CreateService(service_code string, text string, port int) {
 	if !CheckServicePresent(service_code) {
 		go startTextServer(text, port)
@@ -127,7 +133,7 @@ func CreateService(service_code string, text string, port int) {
 		service_addr := "http://"+service_code+".local"+":"+strconv.Itoa(port)
 
 		fmt.Printf("Access the service at: %s or at: %s, press \"Ctrl+C\" to stop sharing\n", ip_addr, service_addr)
-
+		generateQRForCode(ip_addr)
 		defer service.Shutdown()
 
 		select {}
